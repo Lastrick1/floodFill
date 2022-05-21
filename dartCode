@@ -1,0 +1,111 @@
+import 'dart:io';
+import 'dart:math';
+
+void main() {
+    List inputs;
+    int W = int.parse(stdin.readLineSync());
+    int H = int.parse(stdin.readLineSync());
+    var map = new List.generate(H, (_) => new List(W));
+
+    int totalWater = 0; int totalLand = 0;
+    double pctWater;
+    for (int i = 0; i < H; i++) {
+        String row = stdin.readLineSync();
+        for (int j = 0; j < W; j++) {
+            String c = row.substring(j,j+1);
+            map[i][j] = c;
+            if (c == "#") {totalLand++;}
+            else {totalWater++;}
+            pctWater = totalWater.toDouble()/H.toDouble()/W.toDouble();
+        }
+    }
+    stderr.writeln("Percent water: $pctWater");
+    //printMap(map, H, W, false);
+
+
+    // Get coordinates to read
+    var coords = new List();
+    int N = int.parse(stdin.readLineSync());
+    for (int i = 0; i < N; i++) {
+        inputs = stdin.readLineSync().split(' ');
+        int X = int.parse(inputs[0]);
+        int Y = int.parse(inputs[1]);
+        coords.add([X, Y]);
+    }
+
+    // Iterate through all points of interest
+    for (int i = 0; i < N; i++) {
+        int cx = coords[i][0];
+        int cy = coords[i][1];
+
+        // Check for large water
+        if (pctWater > 0.98) {
+            if (map[cy][cy] == "O") {
+                print(totalWater);
+            } else {    
+                print(0);
+            }
+        } else {
+            //stderr.writeln("Checking ($cx, $cy)");
+            if (map[cy][cx] != "#") {
+                String c = map[cy][cx];
+                String specialChar = String.fromCharCode((letterOfAlphabet(c)) % 26 + 65);
+                //stderr.writeln("$c $specialChar");
+                
+                // List for visited points
+                var points = [];
+
+                // Flood map
+                floodFill(map, H, W, cx, cy, specialChar, points);
+                //printMap(map, H, W, false);
+                print(points.length);
+                //stderr.writeln();
+            } else {
+                print(0);
+                //stderr.writeln();
+            }
+        }
+    }
+    
+}
+
+void floodFill(map, H, W, cx, cy, sC, points) {
+    map[cy][cx] = sC;
+    points.add([cx, cy]);
+
+    if (cy > 0) {
+        if (map[cy-1][cx] != "#" && map[cy-1][cx] != sC) {
+            floodFill(map, H, W, cx, cy - 1, sC, points); 
+        }
+    }
+    if (cx > 0) {
+        if (map[cy][cx-1] != "#" && map[cy][cx-1] != sC) {
+            floodFill(map, H, W, cx-1, cy, sC, points); 
+        }
+    }
+    if (cy < H - 1) {
+        if (map[cy+1][cx] != "#" && map[cy+1][cx] != sC) {
+            floodFill(map, H, W, cx, cy + 1, sC, points); 
+        }
+    }
+    if (cx < W - 1) {
+        if (map[cy][cx+1] != "#" && map[cy][cx+1] != sC) {
+            floodFill(map, H, W, cx + 1, cy, sC, points); 
+        }
+    }    
+}
+void printMap(map, height, width, onoff) {
+    for (int i = 0; i < height; i++) {
+        String out = "";
+        for (int j = 0; j < width; j++) {
+            if (map[i][j].runtimeType == String) {out += map[i][j];}
+            else {out += map[i][j].toString();}
+        }
+        if (onoff) {print(out);}
+        else {stderr.writeln(out);}
+    }
+    stderr.writeln();
+}
+int letterOfAlphabet(String currChar) {
+    return currChar.toUpperCase().codeUnitAt(0) - 64;
+}
